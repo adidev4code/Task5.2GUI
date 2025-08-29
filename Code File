@@ -1,0 +1,45 @@
+Code:
+
+import RPi.GPIO as GPIO
+import tkinter as tk
+
+# ---------------- GPIO Setup ----------------
+GPIO.setmode(GPIO.BCM)
+
+# Define LED pins
+led_pins = [17, 22, 24]
+
+# Setup PWM for each LED
+pwms = []
+for pin in led_pins:
+    GPIO.setup(pin, GPIO.OUT)
+    pwm = GPIO.PWM(pin, 1000)   # frequency = 1kHz
+    pwm.start(0)                # start with 0% duty cycle (OFF)
+    pwms.append(pwm)
+
+# ---------------- GUI Setup ----------------
+root = tk.Tk()
+root.title("LED Intensity Controller")
+root.geometry("400x300")
+
+# Function to update brightness
+def update_led(value, index):
+    duty_cycle = int(value)   # slider value
+    pwms[index].ChangeDutyCycle(duty_cycle)
+
+# Create 3 sliders (one for each LED)
+for i in range(3):
+    tk.Label(root, text=f"LED {i+1} Intensity").pack()
+    slider = tk.Scale(root, from_=0, to=100, orient="horizontal",
+                      command=lambda val, idx=i: update_led(val, idx))
+    slider.pack()
+
+# Exit cleanup
+def on_close():
+    for pwm in pwms:
+        pwm.stop()
+    GPIO.cleanup()
+    root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", on_close)
+root.mainloop()
